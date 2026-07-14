@@ -8,6 +8,13 @@ const getFirebaseAdminConfig = () => {
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   if (privateKey) {
+    // Strip surrounding quotes if they exist
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+      privateKey = privateKey.slice(1, -1);
+    }
     // Handle escaped newlines in env variables
     privateKey = privateKey.replace(/\\n/g, '\n');
   }

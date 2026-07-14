@@ -124,6 +124,11 @@ export default function LoginPage() {
                 {user.email}
               </p>
             </div>
+            {authError && (
+              <div className="w-full p-3 rounded-xl border border-destructive/20 bg-destructive/5 text-destructive text-xs text-center font-mono break-words leading-relaxed select-text">
+                ⚠️ {authError}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground/75 leading-relaxed text-center">
               Only authorized Nirvaha administrators can view internal operations. If you believe this is an error, please request your email to be added to the server configuration.
             </p>

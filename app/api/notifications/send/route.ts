@@ -3,17 +3,15 @@ import { adminAuth, adminMessaging } from '@/services/firebase/admin';
 
 export async function POST(req: NextRequest) {
   try {
-    const bypassFcm = process.env.BYPASS_FCM_FOR_TESTING === 'true';
-
-    // 1. If not bypassed, verify Admin SDK is initialized
-    if (!bypassFcm && (!adminAuth || !adminMessaging)) {
+    // 1. Verify Admin SDK is initialized on the server
+    if (!adminAuth || !adminMessaging) {
       return NextResponse.json(
-        { success: false, error: 'Firebase Admin SDK not initialized. Set FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and FIREBASE_PROJECT_ID environment variables.' },
+        { success: false, error: 'Firebase Admin SDK not initialized. Verify server environment variables.' },
         { status: 500 }
       );
     }
 
-    // 2. Extract and verify authentication token
+    // 2. Extract and verify client authorization token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
@@ -23,43 +21,39 @@ export async function POST(req: NextRequest) {
     }
 
     const token = authHeader.split('Bearer ')[1];
-    let email = 'mock-developer@nirvaha.app';
-    let uid = 'mock-uid-12345';
+    
+    // Verify Firebase ID token
+    const decodedToken = await adminAuth.verifyIdToken(token);
+    const email = decodedToken.email || '';
 
-    if (!bypassFcm && adminAuth) {
-      const decodedToken = await adminAuth.verifyIdToken(token);
-      email = decodedToken.email || '';
-      uid = decodedToken.uid;
-
-      if (!email) {
-        return NextResponse.json(
-          { success: false, error: 'No email found in token payload' },
-          { status: 400 }
-        );
-      }
-
-      // Check permissions
-      let isAuthorized = decodedToken.admin === true;
-      if (!isAuthorized) {
-        const authorizedEmailsStr = process.env.AUTHORIZED_ADMIN_EMAILS || '';
-        const authorizedEmails = authorizedEmailsStr
-          .split(',')
-          .map((e) => e.trim().toLowerCase())
-          .filter((e) => e.length > 0);
-
-        isAuthorized = authorizedEmails.includes(email.toLowerCase());
-      }
-
-      if (!isAuthorized) {
-        console.warn(`🔒 Unauthorized FCM send attempt blocked for email: ${email}`);
-        return NextResponse.json(
-          { success: false, error: 'You are not authorized to send notifications' },
-          { status: 403 }
-        );
-      }
+    if (!email) {
+      return NextResponse.json(
+        { success: false, error: 'No email found in token payload' },
+        { status: 400 }
+      );
     }
 
-    // 3. Parse and validate message payload
+    // Perform permission whitelist validation
+    let isAuthorized = decodedToken.admin === true;
+    if (!isAuthorized) {
+      const authorizedEmailsStr = process.env.AUTHORIZED_ADMIN_EMAILS || '';
+      const authorizedEmails = authorizedEmailsStr
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter((e) => e.length > 0);
+
+      isAuthorized = authorizedEmails.includes(email.toLowerCase());
+    }
+
+    if (!isAuthorized) {
+      console.warn(`🔒 Unauthorized FCM send attempt blocked for email: ${email}`);
+      return NextResponse.json(
+        { success: false, error: 'You are not authorized to send notifications' },
+        { status: 403 }
+      );
+    }
+
+    // 3. Parse and validate push notification payload
     const bodyPayload = await req.json();
     const { title, body, imageUrl, topic, priority, deepLink } = bodyPayload;
 
@@ -73,28 +67,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Target Topic destination is required.' }, { status: 400 });
     }
 
-    // 4. Dispatch notification
-    console.log(`✉️ Dispatching push: "${title}" to topic "${topic}" by admin "${email}"`);
+    // 4. Build message payload for Firebase Cloud Messaging
+    console.log(`✉️ Dispatching live push: "${title}" to topic "${topic}" by admin "${email}"`);
 
-    if (bypassFcm) {
-      // Mock successful transmission
-      console.log('🧪 FCM Send bypassed. Dry run mock response sent.');
-      return NextResponse.json({
-        success: true,
-        messageId: `mock-message-id-${Math.random().toString(36).substring(2, 9)}`,
-        info: 'MOCK TRANSMISSION SUCCESS (BYPASS_FCM_FOR_TESTING active)',
-        payload: {
-          title,
-          body,
-          imageUrl,
-          topic,
-          priority,
-          deepLink,
-        }
-      });
-    }
-
-    // Standard FCM messaging payload structure
     const message: any = {
       notification: {
         title: title.trim(),
@@ -118,13 +93,12 @@ export async function POST(req: NextRequest) {
       topic: topic.trim(),
     };
 
-    // Attach optional image URLs to platforms
+    // Attach rich media images to platforms if specified
     if (imageUrl && imageUrl.trim()) {
       message.android.notification.imageUrl = imageUrl.trim();
       message.apns.fcmOptions = {
         imageUrl: imageUrl.trim(),
       };
-      // Web notification image fallback
       message.notification.imageUrl = imageUrl.trim();
     }
 
@@ -133,16 +107,14 @@ export async function POST(req: NextRequest) {
       message.data.deepLink = deepLink.trim();
     }
 
-    if (adminMessaging) {
-      const messageId = await adminMessaging.send(message);
-      console.log(`✅ Push successfully delivered to Firebase. Message ID: ${messageId}`);
-      return NextResponse.json({
-        success: true,
-        messageId,
-      });
-    }
-
-    throw new Error('Firebase Messaging SDK instance missing');
+    // Deliver through live Firebase Cloud Messaging API
+    const messageId = await adminMessaging.send(message);
+    console.log(`✅ Push successfully delivered to Firebase. Message ID: ${messageId}`);
+    
+    return NextResponse.json({
+      success: true,
+      messageId,
+    });
 
   } catch (error: any) {
     console.error('Error dispatching topic message:', error);

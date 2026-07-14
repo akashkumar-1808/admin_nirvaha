@@ -22,8 +22,8 @@ export const isFirebaseAdminConfigured = (): boolean => {
     return false;
   }
   
-  // Suppress initialization if the private key is a mock placeholder
-  const isMockKey = privateKey.includes('MIIEvgIBADANBgkqhkiG9w0B') || privateKey.includes('mock-api-key') || privateKey.length < 100;
+  // Suppress initialization if the project is our default mock placeholder
+  const isMockKey = projectId === 'nirvaha-mock-project' || privateKey.includes('mock-api-key') || privateKey.length < 100;
   return !isMockKey;
 };
 

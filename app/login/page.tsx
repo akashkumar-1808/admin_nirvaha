@@ -13,18 +13,13 @@ import { ShieldAlert, Lock, Mail, ServerCrash, KeyRound } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, isAdmin, loading, authError, isFirebaseConfigured, logout, loginWithMock } = useAuth();
+  const { user, isAdmin, loading, authError, isFirebaseConfigured, logout } = useAuth();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signingIn, setSigningIn] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
-  const isMockBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'true' ||
-                       !isFirebaseConfigured || 
-                       process.env.NEXT_PUBLIC_FIREBASE_API_KEY === 'mock-api-key-abcdefghijk' ||
-                       process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.startsWith('mock-');
 
   useEffect(() => {
     // If user is already logged in and verified as admin, redirect to dashboard
@@ -35,33 +30,18 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
     
-    if (!email || (!password && !isMockBypass)) {
-      setFormError(isMockBypass ? 'Please enter an email address.' : 'Please enter both email and password.');
+    if (!email || !password) {
+      setFormError('Please enter both email and password.');
       return;
     }
 
     setSigningIn(true);
     setFormError(null);
-
-    // 1. Detect if mock bypass credentials are set in .env
-    if (isMockBypass) {
-      toast('Mock Mode: Authenticating admin locally...', 'info');
-      const success = await loginWithMock(email);
-      setSigningIn(false);
-      if (success) {
-        toast('Access Granted. Logged in to developer session.', 'success');
-        router.replace('/dashboard');
-      } else {
-        setFormError('Access Denied. Email address is not in the authorized list.');
-      }
-      return;
-    }
-
-    // 2. Real Firebase authentication flow
-    if (!auth) return;
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // Auth state listener in AuthContext handles authorization redirect
       toast('Login authenticated, verifying credentials...', 'info');
     } catch (err: any) {
       console.error('Sign-in error:', err);
@@ -223,19 +203,14 @@ export default function LoginPage() {
                 <KeyRound className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-muted-foreground/60" />
                 <Input
                   type="password"
-                  placeholder={isMockBypass ? "Optional in Mock Mode" : "••••••••••••"}
+                  placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={signingIn}
                   className="pl-11"
-                  required={!isMockBypass}
+                  required
                 />
               </div>
-              {isMockBypass && (
-                <span className="text-[10px] text-primary/80 font-medium block mt-1 select-none">
-                  💡 Mock Developer Mode active: Password field is optional.
-                </span>
-              )}
             </div>
 
             <Button

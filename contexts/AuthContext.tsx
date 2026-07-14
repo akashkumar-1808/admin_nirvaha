@@ -1,10 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  User,
-  signInWithEmailAndPassword,
-  signOut,
+import { 
+  User, 
+  signInWithEmailAndPassword, 
+  signOut, 
   onAuthStateChanged,
   browserSessionPersistence,
   setPersistence
@@ -19,7 +19,6 @@ interface AuthContextType {
   authError: string | null;
   logout: () => Promise<void>;
   isFirebaseConfigured: boolean;
-  loginWithMock: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -28,9 +27,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   adminLoading: false,
   authError: null,
-  logout: async () => { },
+  logout: async () => {},
   isFirebaseConfigured: false,
-  loginWithMock: async () => false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -40,28 +38,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [adminLoading, setAdminLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const isConfigured = isFirebaseClientConfigured();
-  const isMockBypass = process.env.NEXT_PUBLIC_BYPASS_AUTH === 'false' ||
-    !isConfigured ||
-    process.env.NEXT_PUBLIC_FIREBASE_API_KEY === 'mock-api-key-abcdefghijk';
 
   useEffect(() => {
-    // 1. Check if mock login session exists in storage
-    if (typeof window !== 'undefined') {
-      const savedMockEmail = sessionStorage.getItem('mock_user_email');
-      if (savedMockEmail) {
-        setUser({
-          email: savedMockEmail,
-          uid: 'mock-admin-uid-12345',
-          getIdToken: async () => 'mock-id-token-xyz',
-        } as any);
-        setIsAdmin(true);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // 2. If mock bypass mode is forced, skip standard Firebase listeners
-    if (isMockBypass || !auth) {
+    if (!auth) {
       setLoading(false);
       return;
     }
@@ -118,32 +97,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const loginWithMock = async (email: string): Promise<boolean> => {
-    setLoading(true);
-
-    // In local mock bypass mode, allow any email format to log in instantly
-    const mockUser = {
-      email: email,
-      uid: 'mock-admin-uid-12345',
-      getIdToken: async () => 'mock-id-token-xyz',
-    } as any;
-
-    setUser(mockUser);
-    setIsAdmin(true);
-    setAuthError(null);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('mock_user_email', email);
-    }
-    setLoading(false);
-    return true;
-  };
-
   const logout = async () => {
     setLoading(true);
     try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('mock_user_email');
-      }
       if (auth && auth.currentUser) {
         await signOut(auth);
       }
@@ -167,7 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authError,
         logout,
         isFirebaseConfigured: isConfigured,
-        loginWithMock,
       }}
     >
       {children}

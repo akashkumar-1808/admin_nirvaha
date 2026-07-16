@@ -76,9 +76,9 @@ export async function POST(req: NextRequest) {
         body: body.trim(),
       },
       android: {
+        priority: priority === 'high' ? 'high' : 'normal',
         notification: {
           channelId: 'nirvaha_general_broadcast',
-          priority: priority === 'high' ? 'high' : 'normal',
         }
       },
       apns: {

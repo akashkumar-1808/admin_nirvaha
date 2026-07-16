@@ -66,8 +66,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             },
           });
 
-          if (response.ok) {
-            const data = await response.json();
+          let data: any = null;
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              data = await response.json();
+            } catch (e) {
+              console.error('Failed to parse auth verification JSON:', e);
+            }
+          }
+
+          if (response.ok && data) {
             if (data.authorized) {
               setIsAdmin(true);
             } else {
@@ -75,9 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setAuthError('Access Denied. You are not authorized to access Nirvaha Console.');
             }
           } else {
-            const data = await response.json();
             setIsAdmin(false);
-            setAuthError(data.error || 'Authorization check failed');
+            setAuthError(
+              data?.error || 
+              `Authorization check failed (Status ${response.status}: ${response.statusText || 'Server Error'})`
+            );
           }
         } catch (error: any) {
           console.error('Error verifying admin authorization:', error);

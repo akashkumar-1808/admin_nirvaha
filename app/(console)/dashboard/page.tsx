@@ -46,8 +46,11 @@ export default function DashboardPage() {
       setLoadingHealth(true);
       const res = await fetch('/api/health');
       if (res.ok) {
-        const data = await res.json();
-        setHealth(data);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setHealth(data);
+        }
       }
     } catch (error) {
       console.error('Error fetching system health:', error);

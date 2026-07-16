@@ -51,8 +51,16 @@ export default function SettingsPage() {
       setLoading(true);
       const res = await fetch('/api/health');
       if (res.ok) {
-        const data = await res.json();
-        setHealth(data);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setHealth(data);
+        } else {
+          console.error('Expected JSON health response, received:', contentType);
+          toast('Failed to load environment status: invalid format', 'error');
+        }
+      } else {
+        toast(`Failed to load environment status (Status ${res.status})`, 'error');
       }
     } catch (error) {
       console.error('Error loading settings health:', error);

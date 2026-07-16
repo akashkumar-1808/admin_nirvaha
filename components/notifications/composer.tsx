@@ -142,9 +142,17 @@ export const NotificationComposer: React.FC<ComposerProps> = ({
         body: JSON.stringify(targetPayload),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch (e) {
+          console.error('Failed to parse send notification response JSON:', e);
+        }
+      }
 
-      if (res.ok && data.success) {
+      if (res.ok && data?.success) {
         toast('Notification dispatched successfully!', 'success');
         
         // Save history audit log in page & local storage counter
@@ -156,7 +164,7 @@ export const NotificationComposer: React.FC<ComposerProps> = ({
           const currentHistoryStr = localStorage.getItem('nirvaha_sent_log') || '[]';
           const historyList = JSON.parse(currentHistoryStr);
           historyList.unshift({
-            id: data.messageId || Math.random().toString(36).substring(2, 9),
+            id: data?.messageId || Math.random().toString(36).substring(2, 9),
             title: targetPayload.title,
             body: targetPayload.body,
             topic: targetPayload.topic,
@@ -181,7 +189,10 @@ export const NotificationComposer: React.FC<ComposerProps> = ({
         // Trigger success parent refresh callback
         onSentSuccess();
       } else {
-        throw new Error(data.error || 'Failed to dispatch FCM message');
+        throw new Error(
+          data?.error || 
+          `Failed to dispatch FCM message (Status ${res.status}: ${res.statusText || 'Server Error'})`
+        );
       }
     } catch (err: any) {
       console.error(err);

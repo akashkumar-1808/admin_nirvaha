@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminMessaging } from '@/services/firebase/admin';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Verify Admin SDK is initialized on the server

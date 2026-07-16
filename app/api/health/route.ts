@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminApp, isFirebaseAdminConfigured } from '@/services/firebase/admin';
 import { isFirebaseClientConfigured } from '@/services/firebase/client';
 
+export const runtime = 'nodejs';
+
 export async function GET(req: NextRequest) {
   try {
     const isClientConfigured = isFirebaseClientConfigured();

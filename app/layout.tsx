@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Nirvaha Console — Internal Operations',
+  title: 'Nirvaha Console',
   description: 'Nirvaha Platform Official Administration and FCM Control Panel.',
 };
 

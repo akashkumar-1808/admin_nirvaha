@@ -30,8 +30,8 @@ const app = initializeApp({
 
 const auth = getAuth(app);
 
-const email = '245125748002@mvsrec.edu.in';
-const password = 'NirvahaTest123!';
+const email = 'saieshwarerelli@gmail.com';
+const password = 'Saieshwar@123';
 
 async function createUser() {
   try {
@@ -51,7 +51,7 @@ async function createUser() {
           email: email,
           password: password,
           emailVerified: true,
-          displayName: 'Test User',
+          displayName: 'Saieshwar',
         });
         console.log(`Successfully created new user!`);
       } else {

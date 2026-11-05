@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/toast';
 import {
   LayoutDashboard,
+  Calendar,
+  Ticket,
   BellRing,
   BarChart3,
   Users,
@@ -30,6 +32,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Events', href: '/events', icon: Calendar },
+  { name: 'Bookings', href: '/bookings', icon: Ticket },
   { name: 'Notifications', href: '/notifications', icon: BellRing },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, comingSoon: true },
   { name: 'Companions', href: '/companions', icon: Users, comingSoon: true },
@@ -80,7 +84,13 @@ export const Sidebar: React.FC = () => {
         <nav className="p-4 space-y-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const normalizedPath = pathname && pathname.endsWith('/') && pathname.length > 1
+              ? pathname.slice(0, -1)
+              : pathname || '';
+            const isActive =
+              normalizedPath === item.href ||
+              (item.href !== '/' && normalizedPath.startsWith(`${item.href}/`));
+
 
             if (item.comingSoon) {
               return (

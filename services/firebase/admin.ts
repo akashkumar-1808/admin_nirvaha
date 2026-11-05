@@ -1,6 +1,9 @@
-import { getApps, initializeApp, getApp, cert, App } from 'firebase-admin/app';
+import { getApps, initializeApp, getApp, cert } from 'firebase-admin/app';
+import type { App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
+
 
 const getFirebaseAdminConfig = () => {
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -62,7 +65,11 @@ const getAdminApp = (): App | null => {
 
 const adminApp = getAdminApp();
 
-// Access Auth and Messaging services
+// Access Auth, Firestore, and Messaging services
 export const adminAuth = adminApp ? getAuth(adminApp) : null;
 export const adminMessaging = adminApp ? getMessaging(adminApp) : null;
+export const adminDb: Firestore | null = adminApp ? getFirestore(adminApp) : null;
+export const adminFirestore = adminDb;
 export { adminApp };
+export type { Firestore };
+

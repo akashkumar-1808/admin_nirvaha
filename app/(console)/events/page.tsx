@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select';
 import { Dialog } from '@/components/ui/dialog';
 import { adminGet, adminPost, adminDelete } from '@/lib/adminApiClient';
 import { cn } from '@/utils/cn';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import type {
   EventListing,
   EventPublicationStatus,
@@ -414,13 +414,13 @@ export default function EventsPage() {
     { value: 'displayOrder_asc', label: 'Display Order' },
   ];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.04 } },
   };
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120 } },
+    show: { opacity: 1, y: 0 },
   };
 
   return (

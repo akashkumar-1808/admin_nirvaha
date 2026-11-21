@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/services/firebase/admin';
 import { verifyUserRequest } from '@/lib/auth';
 import { apiSuccess, apiError, handleApiError, ApiErrorCode } from '@/lib/apiResponse';
@@ -42,7 +42,11 @@ export async function GET(req: NextRequest, context: RouteContext) {
       );
     }
 
-    return apiSuccess(booking);
+    return NextResponse.json({
+      success: true,
+      data: booking,
+      booking,
+    }, { status: 200 });
   } catch (error) {
     return handleApiError(error);
   }

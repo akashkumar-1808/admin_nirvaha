@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/services/firebase/admin';
 import { verifyUserRequest } from '@/lib/auth';
 import { apiSuccess, apiError, handleApiError, ApiErrorCode, ApiError } from '@/lib/apiResponse';
@@ -62,7 +62,12 @@ export async function GET(req: NextRequest) {
 
     bookings.sort((a, b) => (b.bookedAt || '').localeCompare(a.bookedAt || ''));
 
-    return apiSuccess(bookings);
+    return NextResponse.json({
+      success: true,
+      data: bookings,
+      bookings,
+      total: bookings.length,
+    }, { status: 200 });
   } catch (error) {
     return handleApiError(error);
   }
@@ -174,9 +179,9 @@ export async function POST(req: NextRequest) {
             ? event.location?.meetingUrl || ''
             : event.location?.venueName || event.location?.address || '',
         userId: authResult.uid!,
-        userEmail: authResult.email || '',
-        userName: attendeeDetails?.[0]?.fullName || 'Seeker',
-        userPhone: attendeeDetails?.[0]?.phone || '',
+        userEmail: body?.userEmail || authResult.email || '',
+        userName: body?.userName || attendeeDetails?.[0]?.fullName || 'Seeker',
+        userPhone: body?.userPhone || attendeeDetails?.[0]?.phone || '',
         participantCount,
         attendeeDetails: attendeeDetails || [],
         status: 'confirmed',
@@ -194,7 +199,11 @@ export async function POST(req: NextRequest) {
       return bookingRecord;
     });
 
-    return apiSuccess(newBooking, 201);
+    return NextResponse.json({
+      success: true,
+      data: newBooking,
+      booking: newBooking,
+    }, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/services/firebase/admin';
 import { verifyUserRequest } from '@/lib/auth';
 import { apiSuccess, apiError, handleApiError, ApiErrorCode, ApiError } from '@/lib/apiResponse';
@@ -91,7 +91,12 @@ export async function POST(req: NextRequest, context: RouteContext) {
       };
     });
 
-    return apiSuccess(result, 200, 'Booking successfully cancelled');
+    return NextResponse.json({
+      success: true,
+      data: result,
+      booking: result,
+      message: 'Booking successfully cancelled',
+    }, { status: 200 });
   } catch (error) {
     return handleApiError(error);
   }

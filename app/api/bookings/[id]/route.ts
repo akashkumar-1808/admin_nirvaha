@@ -55,3 +55,4 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 export async function POST(req: NextRequest, context: RouteContext) {
   return cancelBookingPost(req, context);
 }
+

@@ -16,7 +16,8 @@ function generateBookingReference(): string {
 
 export async function GET(req: NextRequest) {
   try {
-    if (!adminDb) {
+    const db = adminDb;
+    if (!db) {
       return apiError('Firebase Admin SDK not initialized', 500, ApiErrorCode.INTERNAL_ERROR);
     }
 
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     const statusFilter = searchParams.get('status');
     const searchFilter = (searchParams.get('search') || '').toLowerCase().trim();
 
-    const snapshot = await adminDb.collection('bookings').get();
+    const snapshot = await db.collection('bookings').get();
     let bookings: EventBooking[] = snapshot.docs.map((d) => ({
       ...d.data(),
       id: d.id,
@@ -69,7 +70,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    if (!adminDb) {
+    const db = adminDb;
+    if (!db) {
       return apiError('Firebase Admin SDK not initialized', 500, ApiErrorCode.INTERNAL_ERROR);
     }
 
@@ -99,8 +101,8 @@ export async function POST(req: NextRequest) {
       return apiError('Participant count must be at least 1', 400, ApiErrorCode.INVALID_PARTICIPANT_COUNT);
     }
 
-    const newBooking = await adminDb.runTransaction(async (transaction) => {
-      const eventRef = adminDb.collection('events').doc(eventId);
+    const newBooking = await db.runTransaction(async (transaction) => {
+      const eventRef = db.collection('events').doc(eventId);
       const eventDoc = await transaction.get(eventRef);
 
       if (!eventDoc.exists) {
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const bookingRef = adminDb.collection('bookings').doc();
+      const bookingRef = db.collection('bookings').doc();
       const bookingReference = generateBookingReference();
 
       const bookingRecord: EventBooking = {

@@ -77,7 +77,7 @@ Orchestrate the complete implementation of Events, Experiences, and Booking in t
 
 ## Active Timers
 - Heartbeat cron: 0e0d4903-629d-41c5-acec-31c45d45899d/task-425
-- Safety timer: 0e0d4903-629d-41c5-acec-31c45d45899d/task-427
+- Safety timer: 0e0d4903-629d-41c5-acec-31c45d45899d/task-479
 - On succession: kill all timers before spawning successor
 - On context truncation: handle timers as step 4 of the State Recovery section of your prompt says
 

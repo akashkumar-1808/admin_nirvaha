@@ -11,7 +11,8 @@ interface RouteContext {
 
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
-    if (!adminDb) {
+    const db = adminDb;
+    if (!db) {
       return apiError('Firebase Admin SDK not initialized', 500, ApiErrorCode.INTERNAL_ERROR);
     }
 
@@ -35,8 +36,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const reason = body?.reason || 'Cancelled by user';
 
-    const result = await adminDb.runTransaction(async (transaction) => {
-      const bookingRef = adminDb.collection('bookings').doc(bookingId);
+    const result = await db.runTransaction(async (transaction) => {
+      const bookingRef = db.collection('bookings').doc(bookingId);
       const bookingDoc = await transaction.get(bookingRef);
 
       if (!bookingDoc.exists) {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
         throw new ApiError(400, 'Only confirmed bookings can be cancelled', 'BOOKING_NOT_ACTIVE');
       }
 
-      const eventRef = adminDb.collection('events').doc(booking.eventId);
+      const eventRef = db.collection('events').doc(booking.eventId);
       const eventDoc = await transaction.get(eventRef);
       const now = new Date().toISOString();
 

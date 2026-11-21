@@ -25,14 +25,18 @@ Sentinel oversight for Nirvaha Team 2 Mobile App Events & Booking Implementation
 - Do not break existing Nirvaha screens, auth, navigation or push notifications
 - Do not introduce mock data as a substitute for backend integration
 - Proceed directly to event discovery screens after M1 passes verification
+- API is primary source of truth; Firestore fallback must preserve publication visibility, access restrictions, and consistency without bypassing backend rules
+- Mobile deep-link format must match contract with actual Expo Router navigation (/events/[id])
+- Event details flow must be stabilized before starting booking UI
+- Verify on Android / Expo Go; test published, unpublished, cancelled, empty datasets; provide screenshots and test evidence
 
 ## User Context
-- **Last user request**: User instruction (2026-11-05T14:36:30Z) — prioritize immediate M1 implementation and test evidence, stop extra exploratory rounds, proceed directly to discovery screens once M1 passes.
+- **Last user request**: User instruction (2026-11-05T15:24:26Z) — M1 approved; proceed with M2 (discovery + event details screen); ensure Firestore fallback preserves backend visibility rules; align deep linking with Expo Router; provide screenshots and test evidence.
 - **Pending clarifications**: none
-- **Delivered results**: Relayed directly to orchestrator; worker_m1 currently active.
+- **Delivered results**: M1 gate passed; relayed M2 requirements to orchestrator; worker_m2 actively implementing.
 
 ## Project Status
-- **Phase**: in progress (Milestone 1 implementation active)
+- **Phase**: in progress (Milestone 2 Discovery & Details implementation active)
 
 ## Victory Audit Status
 - **Triggered**: no

@@ -50,3 +50,12 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
    - Run `npx expo export --platform web` (must exit 0 with all routes bundled).
 8. Write detailed handoff report to `c:\Users\sai pallavi\OneDrive\Desktop\AKASH\admin_nirvaha\.agents\teamwork\worker_m2\handoff.md`.
 9. Send a message to the orchestrator when finished.
+
+## 2026-11-05T15:28:47Z
+Proceed with completing Milestone 2 in `C:\Users\sai pallavi\OneDrive\Desktop\AKASH\NIRVAHA\Nirvaha` incorporating the latest user requirements:
+1. Write `components/home/EventsRail.tsx` into Nirvaha repo.
+2. Update `app/(tabs)/index.tsx` to import and render `<EventsRail />` between `<CompanionRail />` and `<CollectionRail />`.
+3. Harden Firestore Fallback in `services/eventsService.ts` (API primary, Firestore fallback enforces `where('publicationStatus', 'in', ['published', 'featured'])`, normalize data).
+4. Align Deep-Link Format in `services/pushNotifications.ts` (`nirvaha://events/[id]` and `nirvahaapp://events/[id]` -> `/events/[id]`, foreground listener).
+5. Implement Event Details Screen (`app/events/[id]/index.tsx`) with dynamic actions (advertisement, external_registration, free_booking, paid_booking disabled), status badges, loading/error/retry.
+6. Run TypeScript checks, `npx expo export --platform web`, automated verification script, and write `handoff.md`.

@@ -105,3 +105,47 @@ Important constraints:
 After Milestone 1 passes verification, proceed directly to event discovery screens.
 
 I expect working code and test evidence, not another round of planning updates."
+
+
+## Follow-up — 2026-11-05T15:24:26Z
+
+User instruction:
+"M1 reviewed. Good work. Proceed with Milestone 2.
+
+Before proceeding, address these two points:
+
+1. Review the Firestore fallback in eventsService.ts. The API must remain the primary source of truth. Any Firestore fallback must preserve publication visibility, access restrictions and data consistency. Do not silently bypass backend rules when the API fails.
+
+2. Ensure the deep-link format in the mobile application matches the contract from Team 1, including actual Expo Router navigation and event ID handling.
+
+For Milestone 2, implement:
+- Events discovery screen.
+- Featured events carousel.
+- Category filtering and search.
+- Upcoming events section.
+- Event details screen and navigation.
+- Home screen EventsRail integration.
+
+Requirements:
+- Fetch real event data from the backend.
+- No hardcoded production event data.
+- Preserve existing Nirvaha authentication, home screen and navigation.
+- Implement loading, empty, error and retry states.
+- Handle unavailable or expired events correctly.
+- Ensure the UI works on different Android screen sizes.
+
+Verification:
+- Run TypeScript checks.
+- Run Android Expo export/build verification where supported.
+- Test the actual screens on an Android device using Expo Go.
+- Test with published, unpublished, cancelled and empty event datasets.
+
+Do not start booking UI until the event discovery and details flow is stable.
+
+Provide screenshots, modified file list, and actual test outputs."
+
+
+## Follow-up — 2026-11-05T15:33:22Z
+
+User instruction: "Stop the work and give me progress"
+Please pause/stop further dispatches immediately and summarize current status.

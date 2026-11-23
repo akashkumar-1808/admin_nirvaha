@@ -77,41 +77,46 @@ export async function POST(req: NextRequest, context: RouteContext) {
     };
 
     let notificationDispatched = false;
-    if (
+    const shouldNotify =
       (action === 'publish' || action === 'feature') &&
-      notifyOnPublish &&
-      event.notificationSent !== true
-    ) {
+      (notifyOnPublish || body?.forceNotification === true);
+
+    if (shouldNotify) {
       if (adminMessaging) {
         try {
+          console.log(`[FCM] Dispatching publication broadcast for event: "${event.title}" (${event.id})`);
           await adminMessaging.send({
             topic: 'all_users',
             notification: {
               title: `New Experience: ${event.title}`,
-              body: event.shortDescription || 'Check out our new community event in the Nirvaha App!',
+              body: event.shortDescription || 'Check out our new community gathering in the Nirvaha App!',
             },
             android: {
               priority: 'high',
               notification: {
                 channelId: 'nirvaha_general_broadcast',
                 imageUrl: event.media?.coverImageUrl || '',
+                sound: 'default',
               },
             },
             data: {
               deepLink: `nirvaha://events/${event.id}`,
-              eventId: event.id,
+              eventId: String(event.id),
+              url: `/events/${event.id}`,
               type: 'EVENT_ANNOUNCEMENT',
               category: event.category || '',
             },
           });
+          updates.notificationSent = true;
+          updates.notificationSentAt = nowIso;
+          notificationDispatched = true;
+          console.log(`[FCM] Successfully broadcasted notification to topic: all_users`);
         } catch (fcmErr) {
-          console.warn('FCM broadcast warning:', fcmErr);
+          console.warn('[FCM] Broadcast warning:', fcmErr);
         }
+      } else {
+        console.warn('[FCM] Firebase Admin Messaging service is not initialized');
       }
-
-      updates.notificationSent = true;
-      updates.notificationSentAt = nowIso;
-      notificationDispatched = true;
     }
 
     await eventRef.update(updates);

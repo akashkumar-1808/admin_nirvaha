@@ -476,6 +476,60 @@ export async function dispatchRequest({ method, url, headers = {}, body = null }
     }
   }
 
+  // ROUTE: /api/bookings/[id]/check-in or /api/bookings/check-in
+  const checkInMatch = pathname.match(/^\/api\/bookings\/([^/]+)\/check-in$/);
+  if (checkInMatch || pathname === '/api/bookings/check-in') {
+    if (method === 'POST') {
+      const authErr = requireAdmin();
+      if (authErr) return authErr;
+
+      const targetId = checkInMatch ? checkInMatch[1] : (body?.bookingId || '');
+      const targetRef = body?.reference?.trim()?.toUpperCase();
+
+      let bookingSnap = null;
+      if (targetId) {
+        const snap = await mockDb.collection('bookings').doc(targetId).get();
+        if (snap.exists) bookingSnap = snap;
+      }
+      if (!bookingSnap && targetRef) {
+        const snap = await mockDb.collection('bookings').where('bookingReference', '==', targetRef).limit(1).get();
+        if (!snap.empty) bookingSnap = snap.docs[0];
+      }
+
+      if (!bookingSnap || !bookingSnap.exists) {
+        return { status: 404, body: { success: false, code: 'BOOKING_NOT_FOUND', error: 'Booking not found' } };
+      }
+
+      const booking = bookingSnap.data();
+      if (booking.status === 'cancelled') {
+        return { status: 400, body: { success: false, code: 'BOOKING_ALREADY_CANCELLED', error: 'Cannot check in cancelled booking' } };
+      }
+      if (booking.status === 'attended') {
+        return { status: 400, body: { success: false, code: 'ALREADY_CHECKED_IN', error: 'Attendee already checked in' } };
+      }
+
+      const now = new Date().toISOString();
+      const updated = {
+        ...booking,
+        status: 'attended',
+        checkedInAt: now,
+        checkedInBy: decodedToken.email || decodedToken.uid || 'admin',
+        updatedAt: now
+      };
+      await bookingSnap.ref.update(updated);
+
+      return {
+        status: 200,
+        body: {
+          success: true,
+          message: `Admission confirmed for ${booking.userName}`,
+          data: updated,
+          booking: updated
+        }
+      };
+    }
+  }
+
   // ROUTE 5: /api/bookings/[id] (GET)
   const singleBookingMatch = pathname.match(/^\/api\/bookings\/([^/]+)$/);
   if (singleBookingMatch) {
@@ -548,6 +602,21 @@ export async function dispatchRequest({ method, url, headers = {}, body = null }
 
       if (!eventId) {
         return { status: 400, body: { success: false, code: 'MISSING_EVENT_ID', error: 'eventId is required' } };
+      }
+
+      // Anti-duplication check: User cannot register twice for same event
+      const allUserBookings = (await mockDb.collection('bookings').get()).docs
+        .map(d => d.data())
+        .filter(b => b.eventId === eventId && b.userId === decodedToken.uid && (b.status === 'confirmed' || b.status === 'waitlist' || b.status === 'attended'));
+      if (allUserBookings.length > 0) {
+        return {
+          status: 409,
+          body: {
+            success: false,
+            code: 'DUPLICATE_BOOKING',
+            error: 'You are already registered for this experience. Duplicate registrations are not permitted.'
+          }
+        };
       }
 
       // ACID Capacity Transaction

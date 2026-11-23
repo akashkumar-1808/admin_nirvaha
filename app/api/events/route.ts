@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { adminDb } from '@/services/firebase/admin';
+import { adminDb, adminMessaging } from '@/services/firebase/admin';
 import { verifyAdminRequest, verifyUserRequest } from '@/lib/auth';
 import {
   apiSuccess,
@@ -271,6 +271,43 @@ export async function POST(req: NextRequest) {
     };
 
     await docRef.set(newEvent);
+
+    // FCM Broadcast on Event Creation (when created in published or featured status)
+    const isPublished = newEvent.publicationStatus === 'published' || newEvent.publicationStatus === 'featured';
+    if (isPublished && (newEvent.notifyOnPublish || rawBody.notifyOnPublish)) {
+      if (adminMessaging) {
+        try {
+          await adminMessaging.send({
+            topic: 'all_users',
+            notification: {
+              title: `New Experience: ${newEvent.title}`,
+              body: newEvent.shortDescription || 'Discover this new gathering in Nirvaha!',
+            },
+            android: {
+              priority: 'high',
+              notification: {
+                channelId: 'nirvaha_general_broadcast',
+                imageUrl: newEvent.media?.coverImageUrl || '',
+              },
+            },
+            data: {
+              deepLink: `nirvaha://events/${newEvent.id}`,
+              eventId: newEvent.id,
+              type: 'EVENT_ANNOUNCEMENT',
+              category: newEvent.category || '',
+            },
+          });
+          await docRef.update({
+            notificationSent: true,
+            notificationSentAt: nowIso,
+          });
+          newEvent.notificationSent = true;
+          newEvent.notificationSentAt = nowIso;
+        } catch (fcmErr) {
+          console.warn('FCM broadcast warning on event creation:', fcmErr);
+        }
+      }
+    }
 
     return apiSuccess(newEvent, 201);
   } catch (error) {

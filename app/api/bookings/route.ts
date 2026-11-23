@@ -106,6 +106,64 @@ export async function POST(req: NextRequest) {
       return apiError('Participant count must be at least 1', 400, ApiErrorCode.INVALID_PARTICIPANT_COUNT);
     }
 
+    // STRICT ANTI-DUPLICATION CHECK: User cannot register twice for the same event
+    const userUid = authResult.uid!;
+    const userEmail = (body?.userEmail || authResult.email || '').toLowerCase().trim();
+
+    // Check for existing active bookings by userId
+    const userBookingsSnap = await db
+      .collection('bookings')
+      .where('eventId', '==', eventId)
+      .where('userId', '==', userUid)
+      .get();
+
+    const activeUserBooking = userBookingsSnap.docs.find((d) => {
+      const data = d.data();
+      return data.status === 'confirmed' || data.status === 'waitlist' || data.status === 'attended';
+    });
+
+    if (activeUserBooking) {
+      const data = activeUserBooking.data();
+      return apiError(
+        'You are already registered for this experience. Duplicate registrations are not permitted.',
+        409,
+        ApiErrorCode.DUPLICATE_BOOKING,
+        {
+          existingBookingId: activeUserBooking.id,
+          bookingReference: data.bookingReference,
+          status: data.status,
+        }
+      );
+    }
+
+    // Check by email if provided
+    if (userEmail) {
+      const emailBookingsSnap = await db
+        .collection('bookings')
+        .where('eventId', '==', eventId)
+        .where('userEmail', '==', userEmail)
+        .get();
+
+      const activeEmailBooking = emailBookingsSnap.docs.find((d) => {
+        const data = d.data();
+        return data.status === 'confirmed' || data.status === 'waitlist' || data.status === 'attended';
+      });
+
+      if (activeEmailBooking) {
+        const data = activeEmailBooking.data();
+        return apiError(
+          'A reservation with this email address already exists for this experience.',
+          409,
+          ApiErrorCode.DUPLICATE_BOOKING,
+          {
+            existingBookingId: activeEmailBooking.id,
+            bookingReference: data.bookingReference,
+            status: data.status,
+          }
+        );
+      }
+    }
+
     const newBooking = await db.runTransaction(async (transaction) => {
       const eventRef = db.collection('events').doc(eventId);
       const eventDoc = await transaction.get(eventRef);

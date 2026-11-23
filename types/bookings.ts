@@ -78,6 +78,8 @@ export interface EventBooking {
   cancelledAt?: string;           // ISO 8601 UTC timestamp of cancellation (if cancelled)
   cancellationReason?: string;    // Free-form cancellation rationale
   cancelledBy?: 'user' | 'admin'; // Actor who performed cancellation
+  checkedInAt?: string;           // ISO 8601 UTC timestamp of attendance check-in
+  checkedInBy?: string;           // Staff / admin who admitted the attendee
   updatedAt?: string;             // ISO 8601 UTC timestamp of last modification
   metadata?: Record<string, unknown>; // Extensible metadata (e.g. payment ref, check-in data)
 }
